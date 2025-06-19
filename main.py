@@ -9,6 +9,8 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
+from functions.call_function import call_function
+
 def main():
 
     if (len(sys.argv) < 2):
@@ -48,7 +50,20 @@ def main():
                                                                                  system_instruction=system_prompt))
 
     # Print out response's text, prompt token count, and response token count. If --verbose flag included.
+    function_responses = []
     if is_verbose():
+        if (response.function_calls):
+            for function_call in response.function_calls:
+                function_call_result = call_function(function_call, verbose=True)
+                if (not function_call_result.parts or not function_call_result.parts[0].function_response):
+                    raise Exception("empty function call result")
+                
+                print(f"-> {function_call_result.parts[0].function_response.response}")
+                function_responses.append(function_call_result)
+            
+            if (not function_responses):
+                raise Exception("No function responses generated. Exiting")
+
         print(response.text)
         print(f"User prompt: {content}")
         print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
@@ -56,7 +71,15 @@ def main():
     else:
         if (response.function_calls):
             for function_call in response.function_calls:
-                print(f"Calling function: {function_call.name}({function_call.args})")
+                function_call_result = call_function(function_call)
+                if (not function_call_result.parts or not function_call_result.parts[0].function_response):
+                    raise Exception("empty function call result")
+                
+                function_responses.append(function_call_result)
+
+            if (not function_responses):
+                raise Exception("No function responses generated. Exiting")    
+
         print(response.text)
 
 
