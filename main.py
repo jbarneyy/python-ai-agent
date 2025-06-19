@@ -49,9 +49,10 @@ def main():
                                               config=types.GenerateContentConfig(tools=[available_functions],
                                                                                  system_instruction=system_prompt))
 
+    # List of function call results that are generated when response is created. We append to function responses list.
     function_responses = []
 
-    # Calls functions from the response's function calls list.
+    # Calls functions using call_function.py from the response's function calls list.
     if (response.function_calls):
         for function_call in response.function_calls:
             if is_verbose():
