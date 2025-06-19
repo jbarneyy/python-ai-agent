@@ -49,37 +49,33 @@ def main():
                                               config=types.GenerateContentConfig(tools=[available_functions],
                                                                                  system_instruction=system_prompt))
 
-    # Print out response's text, prompt token count, and response token count. If --verbose flag included.
     function_responses = []
-    if is_verbose():
-        if (response.function_calls):
-            for function_call in response.function_calls:
-                function_call_result = call_function(function_call, verbose=True)
-                if (not function_call_result.parts or not function_call_result.parts[0].function_response):
-                    raise Exception("empty function call result")
-                
-                print(f"-> {function_call_result.parts[0].function_response.response}")
-                function_responses.append(function_call_result)
-            
-            if (not function_responses):
-                raise Exception("No function responses generated. Exiting")
 
+    # Calls functions from the response's function calls list.
+    if (response.function_calls):
+        for function_call in response.function_calls:
+            if is_verbose():
+                function_call_result = call_function(function_call, verbose=True)
+            else:
+                function_call_result = call_function(function_call)
+
+            if (not function_call_result.parts or not function_call_result.parts[0].function_response):
+                raise Exception("empty function call result")
+            
+            if is_verbose():
+                print(f"-> {function_call_result.parts[0].function_response.response}")
+            function_responses.append(function_call_result)
+
+        if (not function_responses):
+            raise Exception("No function responses generated. Exiting")
+        
+    # Print out response's text, prompt token count, and response token count. If --verbose flag included.
+    if is_verbose():
         print(response.text)
         print(f"User prompt: {content}")
         print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
         print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
     else:
-        if (response.function_calls):
-            for function_call in response.function_calls:
-                function_call_result = call_function(function_call)
-                if (not function_call_result.parts or not function_call_result.parts[0].function_response):
-                    raise Exception("empty function call result")
-                
-                function_responses.append(function_call_result)
-
-            if (not function_responses):
-                raise Exception("No function responses generated. Exiting")    
-
         print(response.text)
 
 
