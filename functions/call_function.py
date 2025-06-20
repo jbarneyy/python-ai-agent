@@ -20,13 +20,17 @@ def call_function(function_call_part: types.FunctionCall, verbose=False):
     function_args["working_directory"] = "./calculator"
 
     if (function_name == "get_files_info"):
-        function_result = get_files_info(**function_args)
+        # function_result = get_files_info(**function_args)
+        function_result = get_files_info(function_args["working_directory"], function_args["directory"])
     elif (function_name == "get_file_content"):
-        function_result = get_file_content(**function_args)
+        # function_result = get_file_content(**function_args)
+        function_result = get_file_content(function_args["working_directory"], function_args["file_path"])
     elif (function_name == "run_python_file"):
-        function_result = run_python_file(**function_args)
+        # function_result = run_python_file(**function_args)
+        function_result = run_python_file(function_args["working_directory"], function_args["file_path"])
     elif (function_name == "write_file"):
-        function_result = write_file(**function_args)
+        # function_result = write_file(**function_args)
+        function_result = write_file(function_args["working_directory"], function_args["file_path"], function_args["content"])
     else:
         return types.Content(
             role="tool",
@@ -49,12 +53,3 @@ def call_function(function_call_part: types.FunctionCall, verbose=False):
         ],
     )
     
-
-
-
-
-
-def main_play():
-    pass
-
-main_play()

@@ -43,32 +43,54 @@ def main():
     # Creating list named messages with a single Content object. Content object includes a nested Part object with message text.
     messages = [types.Content(role="user", parts=[types.Part(text=content)])]
 
-    # Calls Gemini’s generate_content() method using the "gemini-2.0-flash-001" model.
-    response = client.models.generate_content(model="gemini-2.0-flash-001", 
-                                              contents=messages, 
-                                              config=types.GenerateContentConfig(tools=[available_functions],
-                                                                                 system_instruction=system_prompt))
 
-    # List of function call results that are generated when response is created. We append to function responses list.
-    function_responses = []
+    MAX_LOOP = 20
+    CURRENT_LOOP = 0
 
-    # Calls functions using call_function.py from the response's function calls list.
-    if (response.function_calls):
-        for function_call in response.function_calls:
-            if is_verbose():
-                function_call_result = call_function(function_call, verbose=True)
-            else:
-                function_call_result = call_function(function_call)
+    while (CURRENT_LOOP < MAX_LOOP):
 
-            if (not function_call_result.parts or not function_call_result.parts[0].function_response):
-                raise Exception("empty function call result")
+        CURRENT_LOOP += 1
+
+        # Calls Gemini’s generate_content() method using the "gemini-2.0-flash-001" model.
+        response = client.models.generate_content(model="gemini-2.0-flash-001", 
+                                                contents=messages, 
+                                                config=types.GenerateContentConfig(tools=[available_functions],
+                                                                                    system_instruction=system_prompt))
+        
+        for candidate in response.candidates:
+            messages.append(candidate.content)
+
+
+        # List of function call results that are generated when response is created. We append to function responses list.
+        function_responses = []
+
+        # Calls functions using call_function.py from the response's function calls list.
+        if (response.function_calls):
+            for function_call in response.function_calls:
+                if is_verbose():
+                    function_call_result = call_function(function_call, verbose=True)
+                else:
+                    function_call_result = call_function(function_call)
+
+                if (not function_call_result.parts or not function_call_result.parts[0].function_response):
+                    raise Exception("empty function call result")
+                
+                # messages.append(types.Content(role="tool", parts=[types.Part(function_response=
+                #                                                              types.FunctionResponse(name=function_call.name,
+                #                                                                                     response=function_call_result))]))
+
+                messages.append(function_call_result)
+                
+                if is_verbose():
+                    print(f"-> {function_call_result.parts[0].function_response.response}")
+                
+                function_responses.append(function_call_result)
+
+            if (not function_responses):
+                raise Exception("No function responses generated. Exiting")
             
-            if is_verbose():
-                print(f"-> {function_call_result.parts[0].function_response.response}")
-            function_responses.append(function_call_result)
-
-        if (not function_responses):
-            raise Exception("No function responses generated. Exiting")
+        else:
+            break
         
     # Print out response's text, prompt token count, and response token count. If --verbose flag included.
     if is_verbose():

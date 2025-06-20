@@ -3,8 +3,10 @@ import os
 def get_files_info(working_directory, directory=None):
 
     working_dir_path = os.path.abspath(working_directory)
-    dir_path = os.path.join(working_dir_path, directory)
-    dir_path = os.path.abspath(dir_path)
+
+    if (directory):
+        dir_path = os.path.join(working_dir_path, directory)
+        dir_path = os.path.abspath(dir_path)
 
     # print(working_dir_path)
     # print(dir_path)
